@@ -8,7 +8,9 @@
 ## Project Overview
 
 - **Solution**: `MES.sln`
-- **Language**: C# (.NET Framework 4.8)
+- **Language**: C# (.NET 8)
+- **Config**: appsettings.json (NOT App.config)
+- **SqlClient**: Microsoft.Data.SqlClient (NOT System.Data.SqlClient)
 - **Database**: SQL Server (via Dapper)
 - **Pattern**: 3-Layer Architecture — UI → BLL → DAL
 - **UI**: WinForms — **DO NOT generate any UI files in this task**

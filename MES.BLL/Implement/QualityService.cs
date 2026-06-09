@@ -9,6 +9,7 @@ namespace MES.BLL.Implement
 {
     public class QualityService : IQualityService
     {
+        private const string DefaultAutoNcrDefectCode = "DEF-DIM-001";
         private readonly IInspectionOrderRepository _inspectionRepo;
         public QualityService(IInspectionOrderRepository inspectionRepo) { _inspectionRepo = inspectionRepo; }
 
@@ -39,7 +40,7 @@ namespace MES.BLL.Implement
                 bool ok = _inspectionRepo.UpdateResult(inspectionNo, ngQty, result); if (!ok) return ServiceResult.Fail("检验结果提交失败");
                 if (result == "FAIL")
                 {
-                    var ncr = new NCReport { NCRNo = CodeGenerator.GenerateNCRNo(), InspectionNo = inspectionNo, DefectCode = "UNKNOWN", NGQty = ngQty, Disposition = "SCRAP", Status = 0 };
+                    var ncr = new NCReport { NCRNo = CodeGenerator.GenerateNCRNo(), InspectionNo = inspectionNo, DefectCode = DefaultAutoNcrDefectCode, NGQty = ngQty, Disposition = "SCRAP", Status = 0 };
                     _inspectionRepo.InsertNCR(ncr);
                 }
                 return ServiceResult.Ok();

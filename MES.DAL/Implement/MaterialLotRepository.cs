@@ -28,9 +28,19 @@ namespace MES.DAL.Implement
             using var conn = DbContext.GetConnection(); conn.Open(); using var tx = conn.BeginTransaction();
             try
             {
-                decimal newQty = lot.Quantity - qty;
-                conn.Execute("UPDATE T_MaterialLot SET Quantity=@NewQuantity, UpdateTime=GETDATE() WHERE LotNo=@LotNo AND IsActive=1", new { lot.LotNo, NewQuantity = newQty }, tx);
-                if (newQty == 0) conn.Execute("UPDATE T_MaterialLot SET Status=@Status, UpdateTime=GETDATE() WHERE LotNo=@LotNo AND IsActive=1", new { lot.LotNo, Status = (int)LotStatus.Consumed }, tx);
+                int affectedRows = conn.Execute(@"UPDATE T_MaterialLot
+SET Quantity = Quantity - @Qty,
+    Status = CASE WHEN Quantity - @Qty = 0 THEN @ConsumedStatus ELSE Status END,
+    UpdateTime = GETDATE()
+WHERE LotNo = @LotNo AND Status = @AvailableStatus AND IsActive = 1 AND Quantity >= @Qty",
+                    new { lot.LotNo, Qty = qty, AvailableStatus = (int)LotStatus.Available, ConsumedStatus = (int)LotStatus.Consumed }, tx);
+
+                if (affectedRows == 0)
+                {
+                    tx.Rollback();
+                    return false;
+                }
+
                 var txn = new MaterialTransaction { TransactionNo = CodeGenerator.GenerateTransactionNo(), LotNo = lot.LotNo, ItemCode = lot.ItemCode, TransactionType = "ISSUE", Quantity = -qty, FromLocation = lot.LocationCode, ToLocation = null, WorkOrderNo = workOrderNo, OperatorId = operatorId, Remark = "Issue material" };
                 InsertTransactionInternal(conn, tx, txn); tx.Commit(); return true;
             }
